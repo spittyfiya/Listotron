@@ -93,10 +93,10 @@ async def is_admin(
     user = update.effective_user
 
     if not chat or not user:
-        return False
+	return False
 
-    if chat.type == "private":
-        return False
+    if chat.type == "private"
+	return False
 
     member = await context.bot.get_chat_member(
         chat_id=chat.id,
@@ -132,7 +132,7 @@ async def join(
         "telegram": user.username or user.first_name,
         "poker": poker_name,
         "user_id": user.id,
-        "dm_enabled": True,
+        "dm_enabled": False,
         "added_by_admin": False,
     }
 
@@ -148,17 +148,29 @@ async def join(
 # ADMIN ADD
 # ============================================================
 
-async def add_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    
+async def add_user(
+	update: Update, 
+	context: ContextTypes.DEFAULT_TYPE
+	):
     if not update.message.reply_to_message:
-        await update.message.reply_text("❌ Please reply to a user's message with /add to register them.")
-        return
+	await update.message.reply_text(
+	"Please reply to a user's message with /add to register them."
+	)
+	return
 
-    target_user = update.message.reply_to_message.from_user
-    user_id = target_user.id
-    username = target_user.username or "No Username"
+	user = update.target_user
 
-    await update.message.reply_text(f"✅ Added {username} (ID: `{user_id}`) to the poker system!")
+    players[str(user.id)] = {
+        "telegram": user.username or user.first_name,
+        "poker": poker_name,
+	"username": target_user.username or "No Username"
+	 "dm_enabled": False,
+	"added_by_admin": True,
+	}
+
+	save_players()
+
+	await update.message.reply_text(f"✅ Added {username} (ID: `{user_id}`) to the poker system!")
 
   #CHECK DUPLICATES
     _, existing = find_player_by_telegram(
@@ -769,8 +781,8 @@ async def undo_results(
 
 
 # ============================================================
-# REMINDERS
-# ============================================================
+#REMINDED
+
 
 async def send_admin_dm_reminder(
     update: Update,
@@ -794,18 +806,28 @@ async def send_admin_dm_reminder(
     failed = 0
 
     for info in players.values():
-      try:
-        await context.bot.send_message(
+        if not info.get("user_id"):
+            continue
+
+        try:
+            await context.bot.send_message(
                 chat_id=info["user_id"],
                 text=reminder_text,
             )
-         sent += 1
+            sent += 1
+
         except Exception as error:
-	 failed += 1
-	 print(
-	        f"Could not message "
-                f"{info['telegram']}: {error}"
+            failed += 1
+            print(
+                f"Could not message "
+                f"{info.get('telegram', 'Unknown player')}: {error}"
             )
+
+    manual_count = sum(
+        1
+        for info in players.values()
+        if not info.get("user_id")
+    )
 
     response = (
         f"✅ {confirmation_name} sent to "
@@ -818,19 +840,16 @@ async def send_admin_dm_reminder(
             f"{failed} player(s)."
         )
 
-    manual_count = sum(
-        1
-        for info in players.values()
-        if not info.get("user_id")
-    )
-
     if manual_count:
         response += (
-            f"\nℹ️ {manual_count} manually-added "
-            f"player(s) could not be DM'd."
+            f"\nℹ️ {manual_count} manually registered "
+            f"player(s) skipped (no user ID)."
         )
 
     await update.message.reply_text(response)
+
+
+
 
 #REMINDER COMMANDS
 #===========
@@ -958,7 +977,7 @@ def main():
 
     # Admin commands
     app.add_handler(
-        CommandHandler("add", add_player)
+        CommandHandler("add", add_user)
     )
 
     app.add_handler(
