@@ -9,7 +9,7 @@ from telegram.ext import (
 )
 
 
-TOKEN = "8684900301:AAEY1_O460gnO2fLABpNEGqka_puzuqMmzw"
+TOKEN = "ENTER TOKEN HERE"
 
 PLAYERS_FILE = "players.json"
 LEADERBOARD_FILE = "leaderboard.json"
